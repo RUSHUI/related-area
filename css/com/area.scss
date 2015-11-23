@@ -1,0 +1,127 @@
+.related-area{
+    width:252px;
+    position:relative;
+    font-size:14px;
+    float:left;
+    .city-title{
+        border: 1px solid #ccc;
+        font-size: 12px;
+        padding: 4px 8px;
+        outline: 0;
+        color: #ccc;
+        position: relative;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        &.has-city-title{
+            color:black;
+        }
+    }
+
+    .drop-icon{
+        position: absolute;
+        top: 13px;
+        right: 8px;
+        width: 10px;
+        height: 5px;
+        background: url(../assets/icons/updown.png) -10px -25px no-repeat;
+    }
+    .area-mask{
+        position:absolute;
+        top:27px;
+        left:-1px;
+        .mk-slt-tap{
+            border-bottom: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+            border-top: 1px solid #ccc;
+            width: 252px;
+            height: 35px;
+            background: #f0f0f0;
+        }        
+    }
+    .mk-slt-tap{
+        a{
+            float: left;
+            display: inline;
+            margin-bottom: -1px;
+            padding: 7px 25px;
+            width: 33px;
+            border-left: 1px solid #ccc;
+            border-bottom: 1px solid transparent;
+            color: black;
+            text-align: center;
+            outline: 0;
+        }
+         .current {
+            background: #fff;
+            border-bottom: 1px solid #fff;
+            color: #f60;
+        }
+    }
+    .city-slt{
+        border: 1px solid #ccc;
+        border-top: none;
+        padding: 10px 5px;
+        width: 241px;
+        background: #fff;
+        font-size: 12px;
+        dl {
+            line-height: 2;
+            clear: both;
+            padding: 3px 0;
+            margin: 0;
+        }
+        dl:after {
+            clear: both;
+            content: " ";
+            display: block;
+            font-size: 0;
+            height: 0;
+            visibility: hidden;
+        }
+        dd {
+            width: calc(100% - 35px );
+            display: inline;
+            float: left;
+            margin-left: 0;
+        }
+        &.city{
+            dd{
+                width:100%;
+            }
+        }
+        &.district{
+            dd{
+                width:100%;
+            }
+        }
+        dt {
+            display: inline-block;
+            width: 25px;
+            float: left;
+            padding-right: 10px;
+            font-weight: 700;
+            text-align: right;
+        }
+        a:hover,a:focus{
+            background-color: #fff8f3;
+            border-radius: 2px;
+            color: #f60;
+        }
+        a{
+            display: inline-block;
+            color: #4D4D4D;
+            padding: 0 5px;
+            outline: 0;
+            text-decoration: none;
+            white-space: nowrap;
+            margin-right: 2px;
+        }
+        a.current {
+            background-color: #f60;
+            color: #fff;
+            border-radius: 2px;
+        }
+    }
+}
