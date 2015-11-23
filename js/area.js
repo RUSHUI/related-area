@@ -1,5 +1,9 @@
 (function( $, win, nul ){
     "use strict";
+    /**
+     * [Area description]
+     * @param {[type]} option [description]
+     */
     function Area(option){
         var defaults={
             provUrl:"./assets/data/province.json",
@@ -21,6 +25,12 @@
             $this.data("com",new area($this,option));
         });
     }
+    /**
+     * [area description]
+     * @param  {[type]} dom [description]
+     * @param  {[type]} ops [description]
+     * @return {[type]}     [description]
+     */
     function area(dom,ops){
         
         this.dom    = dom;
@@ -275,6 +285,13 @@
                 }
             }
         },
+        /**
+         * [postData description]
+         * @param  {[type]}   url  [description]
+         * @param  {[type]}   data [description]
+         * @param  {Function} fn   [description]
+         * @return {[type]}        [description]
+         */
         postData:function( url, data, fn ){
             var ths=this;
             $.ajax({
