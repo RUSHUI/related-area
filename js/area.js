@@ -23,6 +23,8 @@
             };
             option=$.extend(defaults,option,ops);
             $this.data("com",new area($this,option));
+            ns("com");
+            local.rs.com[$this.attr("id") + new Date]=$this.data("com");            
         });
     }
     /**

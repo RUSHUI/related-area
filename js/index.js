@@ -1,9 +1,16 @@
 
 $(function(){
+    // 根据指定的dom初始化该组件
     $('[com="related-area"]').Area();
 });
 
-
+/**
+ * [global的namespace 生成工具]
+ * @param  {[type]} $   [description]
+ * @param  {[type]} win [description]
+ * @param  {[type]} nul [description]
+ * @return {[type]}     [description]
+ */
 (function($, win, nul) {
 
     "use strict";
@@ -53,7 +60,7 @@ $(function(){
     
     win.local=local;
     ns("ns") ? local.rs.ns=ns : console.log(local.rs.ns);
-
+    ns("com");
 })( jQuery, window );
 
 
