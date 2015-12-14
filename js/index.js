@@ -60,7 +60,7 @@ $(function(){
     
     win.local=local;
     ns("ns") ? local.rs.ns=ns : console.log(local.rs.ns);
-    ns("com");
+    ns("cell");
 })( jQuery, window );
 
 

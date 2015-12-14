@@ -6,12 +6,10 @@
      */
     function Area(option){
         var defaults={
-            provUrl:"./assets/data/province.json",
-            cityUrl:"./assets/data/city.json",
-            districtUrl:"./assets/data/district.json",
+            url:"./assets/data/area.json",
             curProvId:"1",
-            curCityId:"",
-            curDistrictId:""
+            curCityId:"3301",
+            curDistrictId:"380"
 
         };
         return this.each(function(){
@@ -22,9 +20,8 @@
                 curDistrictId:$this.find("input.iArea").val()
             };
             option=$.extend(defaults,option,ops);
-            $this.data("com",new area($this,option));
-            ns("com");
-            local.rs.com[$this.attr("id") + new Date]=$this.data("com");            
+            $this.data("cell",new area($this,option));
+            local.rs.cell[$this.attr("id") + new Date]=$this.data("cell");            
         });
     }
     /**
@@ -36,7 +33,11 @@
     function area(dom,ops){
         
         this.dom    = dom;
+        this.prov={};
+        this.city={};
+        this.area={};
         this.settings = ops;
+        this.areadata=null;
         this.init();
     }
     var method = {
@@ -73,14 +74,45 @@
             this.mask=this.wrap.find(".area-mask");
             this.mask.hide();
             this.regEvent();
-            this.renderset=this.render();
-            this.renderset.render();
+            ths.postData(ths.settings.url,{},function(data){
+                ths.areadata=data;
+                ths.preData(data);
+                ths.renderset=ths.render();
+                ths.renderset.render();
+            });
+        },
+        preData:function(data){
+            var ths=this;
+            // var p=0,s=0,x=0;
+            for(var i=0,_prov=data;i<_prov.length;i++){
+                // p++;
+                // console.log("省",_prov[i],p);
+                
+                ths.prov[_prov[i].id]=_prov[i];
+                if(_prov[i].subs){
+                    for(var j=0,_city=_prov[i].subs;j<_city.length;j++){
+                        // s++;
+                        // console.log("    市",_city[j],s);
+                        ths.city[_city[j].id]=_city[j];
+                        if(_city[j].subs){
+                           for(var k=0,_area=_city[j].subs;k<_area.length;k++){
+                                // x++
+                                // console.log("        县",_area[k],x);
+                                ths.area[_area[k].id]=_area[k];
+                            } 
+                        }
+                        
+                    }
+                }
+                
+            }
+            return "";
         },
         regEvent:function(){
             var ths=this;
             this.wrap.on("click",".city-title",function(){
                 
-                ths.mask.show();
+                ths.mask.toggle();
             });
             this.mask.find(".mk-slt-tap").on("click","a",function(){
                 
@@ -98,21 +130,27 @@
                 if(!$this.hasClass('current')){
                     ths.mask.find(".city-slt.prov a").removeClass('current');
                     $this.addClass('current');
-                    ths.renderset.city({id:id});
+                    ths.renderset.city(ths.prov[id]);
                     ths.renderset.district({id:""});
                     value=name; 
                     title.html(name);
                     title.addClass('has-city-title');
                     ths.dom.find("input.iProv").val(id);
+                    ths.dom.find("input.iCity").val("");
+                    ths.dom.find("input.iArea").val("");
+                    ths.mask.find('a[cmd="city"]').click();
                 }
                 
+            });
+            this.mask.on("dblclick",function(){
+                ths.mask.hide();
             });
             this.mask.find(".city").on("click","a",function(){
                 var $this=$(this),id=$this.attr("attr-id"),name=$this.attr("title"),title=ths.wrap.find(".city-title"),value="";
                 if(!$this.hasClass('current')){
                     $this.siblings('a').removeClass('current');
                     $this.addClass('current');
-                    ths.renderset.district({id:id});
+                    ths.renderset.district(ths.city[id]);
                     if(title.hasClass('has-city-title')){
                         if(title.html().search("/")!=-1){
                             value=title.html().split('<span style="color:#cfcfcf"> / </span>').slice(0,-1)[0];
@@ -124,6 +162,8 @@
                     title.html(value);
                     title.addClass('has-city-title');
                     ths.dom.find("input.iCity").val(id);
+                    ths.dom.find("input.iArea").val("");
+                    ths.mask.find('a[cmd="district"]').click();
                 }
             });
             this.mask.find(".district").on("click","a",function(){
@@ -143,20 +183,23 @@
                     title.addClass('has-city-title');
 
                     ths.dom.find("input.iArea").val(id);
+
                 }
             });
         },
         render:function(){
             var ths=this;
-
+            var data=ths.areadata;
             return{
                 province:function(){
-                    ths.postData(ths.settings.provUrl,{},function(data){
-                        var _str="";
+                    var curItem={};
+                    
+                    var _str="";
                         var _group = {"A~G":[],"H~K":[],"L~S":[],"T~Z":[]};
-                        data = data.sort(function(a,b){return a.pinyin[0].toUpperCase().charCodeAt()-b.pinyin[0].toUpperCase().charCodeAt();})
+
+                        data = data.sort(function(a,b){return a.code[0].toUpperCase().charCodeAt()-b.code[0].toUpperCase().charCodeAt();})
                         for(var i=0;i<data.length;i++){
-                            var firstLetter=data[i].pinyin[0].toUpperCase();
+                            var firstLetter=data[i].code[0].toUpperCase();
                             if(/[A-G]/.test(firstLetter)){
                                 _group["A~G"].push(data[i]);
                             }else if(/[H-K]/.test(firstLetter)){
@@ -173,11 +216,12 @@
                                 _str+='<dt>'+c+'</dt>';
                                 _str+='<dd>';
                                 for(var i=0;i<_group[c].length;i++){
-                                    if(ths.settings.curProvId && ths.settings.curProvId==_group[c][i].ProID){
-                                        _str+='<a class="current" title="'+_group[c][i].name+'" attr-id='+_group[c][i].ProID+'>'+_group[c][i].name+'</a>';
+                                    if(ths.settings.curProvId && ths.settings.curProvId==_group[c][i].id){
+                                        curItem=_group[c][i];
+                                        _str+='<a class="current" title="'+_group[c][i].name+'" attr-id='+_group[c][i].id+'>'+_group[c][i].name+'</a>';
                                         ths.wrap.find(".city-title").html(_group[c][i].name).addClass('has-city-title');
                                     }else{
-                                        _str+='<a title="'+_group[c][i].name+'" attr-id='+_group[c][i].ProID+'>'+_group[c][i].name+'</a>';
+                                        _str+='<a title="'+_group[c][i].name+'" attr-id='+_group[c][i].id+'>'+_group[c][i].name+'</a>';
                                     }
                                 }
                                 _str+='</dd>';
@@ -185,51 +229,54 @@
                             }
                         }
                         ths.mask.find(".mk-slt-cont .prov").html(_str);
-                    });
+
+                    return curItem;
                 },
                 city:function(_data){
 
-                    var id = _data.id;
+                    var id = _data.id,curItem={};
 
                     if( !id ){
                         ths.mask.find(".mk-slt-cont .city").html("");
                         return;
                     }
-
-                    ths.postData(ths.settings.cityUrl,{id:_data.id},function(data){
-                        
-                        var _str = "", _group = [],flag=1;                        
-                        data = data.sort(function( a, b ){ return a.ProID - b.ProID;});
-                        for( var i=0; i < data.length; i++ ){
-                            console.log(data[i].ProID,id);
-                            if( data[i].ProID == id ){
-                                _group.push( data[i] );
-                                flag=2;
-                            }else{
-                                if(flag==2){
-                                    flag=3;
-                                }
-                            }
-                            if(flag==3){
-                                break;
-                            }
-
-                        }
-                        _str += '<dl class="city-slt-city">';
-                        _str += '<dd>';
-                        for( var i=0; i < _group.length; i++ ){
-                            if(ths.settings.curCityId && ths.settings.curCityId==_group[i].CityID){
-                                _str+='<a class="current" title="'+_group[i].name+'" attr-id="'+_group[i].CityID+'" parent-id="'+_group[i].ProID+'" href="javascript:;">'+_group[i].name+'</a>';
-                                var title=ths.wrap.find(".city-title");
-                                title.html(title.html()+'<span style="color:#cfcfcf"> / </span>'+_group[i].name);
-                            }else{
-                                _str+='<a title="'+_group[i].name+'" attr-id="'+_group[i].CityID+'" parent-id="'+_group[i].ProID+'" href="javascript:;">'+_group[i].name+'</a>';
+                    var _str = "", _group = [],flag=1;       
+                    if(!_data.subs){
+                        data=[];
+                    }else{
+                        data = _data.subs.sort(function( a, b ){ return a.id - b.id;});
+                    }                 
+                    for( var i=0; i < data.length; i++ ){
+                        // console.log(data[i].id,id);
+                        if( data[i].pid == id ){
+                            _group.push( data[i] );
+                            flag=2;
+                        }else{
+                            if(flag==2){
+                                flag=3;
                             }
                         }
-                        _str += '</dd>';
-                        _str+='</dl>';
-                        ths.mask.find(".mk-slt-cont .city").html(_str);
-                    });
+                        if(flag==3){
+                            break;
+                        }
+
+                    }
+                    _str += '<dl class="city-slt-city">';
+                    _str += '<dd>';
+                    for( var i=0; i < _group.length; i++ ){
+                        if(ths.settings.curCityId && ths.settings.curCityId==_group[i].id){
+                            curItem=_group[i];
+                            _str+='<a class="current" title="'+_group[i].name+'" attr-id="'+_group[i].id+'" parent-id="'+_group[i].pid+'" href="javascript:;">'+_group[i].name+'</a>';
+                            var title=ths.wrap.find(".city-title");
+                            title.html(title.html()+'<span style="color:#cfcfcf"> / </span>'+_group[i].name);
+                        }else{
+                            _str+='<a title="'+_group[i].name+'" attr-id="'+_group[i].id+'" parent-id="'+_group[i].pid+'" href="javascript:;">'+_group[i].name+'</a>';
+                        }
+                    }
+                    _str += '</dd>';
+                    _str+='</dl>';
+                    ths.mask.find(".mk-slt-cont .city").html(_str);
+                    return curItem;
                 },
                 district:function(_data){
                     
@@ -240,49 +287,48 @@
                         ths.mask.find(".mk-slt-cont .district").html("");
                         return;
                     }
+                    var _str = "", _group = [],flag=1;                        
+                    if(!_data.subs){
+                        data=[];
+                    }else{
+                        data = _data.subs.sort(function( a, b ){ return a.id - b.id;});
+                    }     
+                    for( var i=0; i < data.length; i++ ){
+                        // console.log(data[i].id,id);
 
-                    ths.postData(ths.settings.districtUrl,{id:_data.id},function(data){
-
-                        var _str = "", _group = [],flag=1;                        
-                        data = data.sort(function( a, b ){ return a.CityID - b.CityID;});
-                        
-                        for( var i=0; i < data.length; i++ ){
-                            console.log(data[i].CityID,id);
-
-                            if( data[i].CityID == id ){
-                                _group.push( data[i] );
-                                flag=2;
-                            }else{
-                                if(flag==2){
-                                    flag=3;
-                                }
-                            }
-                            if(flag==3){
-                                break;
-                            }
-
-                        }
-
-                        _str+='<dl class="city-slt-district">';
-                        _str+='<dd>';
-                        for( var i=0; i < _group.length; i++ ){
-                            if(ths.settings.curDistrictId && ths.settings.curDistrictId==_group[i].Id){
-                                _str+='<a class="current" title="'+_group[i].name+'" attr-id="'+_group[i].Id+'" attr-parent-id="'+_group[i].CityID+'">'+_group[i].name+'</a>';
-                                var title=ths.wrap.find(".city-title");
-                                title.html(title.html()+'<span style="color:#cfcfcf"> / </span>'+_group[i].name);
-                            }else{
-                                _str+='<a title="'+_group[i].name+'" attr-id="'+_group[i].Id+'" attr-parent-id="'+_group[i].CityID+'">'+_group[i].name+'</a>';
+                        if( data[i].pid == id ){
+                            _group.push( data[i] );
+                            flag=2;
+                        }else{
+                            if(flag==2){
+                                flag=3;
                             }
                         }
-                        _str+='</dd>';
-                        _str+='</dl>';
-                        ths.mask.find(".mk-slt-cont .district").html(_str);
-                    });
+                        if(flag==3){
+                            break;
+                        }
+
+                    }
+
+                    _str+='<dl class="city-slt-district">';
+                    _str+='<dd>';
+                    for( var i=0; i < _group.length; i++ ){
+                        if(ths.settings.curDistrictId && ths.settings.curDistrictId==_group[i].id){
+                            _str+='<a class="current" title="'+_group[i].name+'" attr-id="'+_group[i].id+'" attr-parent-id="'+_group[i].pid+'">'+_group[i].name+'</a>';
+                            var title=ths.wrap.find(".city-title");
+                            title.html(title.html()+'<span style="color:#cfcfcf"> / </span>'+_group[i].name);
+                        }else{
+                            _str+='<a title="'+_group[i].name+'" attr-id="'+_group[i].id+'" attr-parent-id="'+_group[i].pid+'">'+_group[i].name+'</a>';
+                        }
+                    }
+                    _str+='</dd>';
+                    _str+='</dl>';
+                    ths.mask.find(".mk-slt-cont .district").html(_str);
                 },
                 render:function(){
-                    this.province();
-                    this.city({id:ths.settings.curProvId});
-                    this.district({id:ths.settings.curCityId});
+                    var provinces=this.province();
+                    var cities=this.city(provinces);
+                    this.district(cities);
                 }
             }
         },
